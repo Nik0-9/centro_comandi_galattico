@@ -1,0 +1,12 @@
+# Fase 1: Build dell'applicazione con Maven
+FROM maven:3.8.5-openjdk-17 AS builder
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Fase 2: Creazione dell'immagine finale con solo il JRE
+FROM eclipse-temurin:17-jre-focal
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
