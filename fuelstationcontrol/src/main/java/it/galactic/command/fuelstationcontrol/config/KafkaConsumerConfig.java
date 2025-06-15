@@ -1,4 +1,4 @@
-package it.galactic.command.config;
+package it.galactic.command.fuelstationcontrol.config;
 
 import it.galactic.command.fuelstationcontrol.dto.GalaxyMissionDTO;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

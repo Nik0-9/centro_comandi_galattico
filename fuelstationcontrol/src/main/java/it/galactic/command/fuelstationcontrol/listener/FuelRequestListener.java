@@ -1,4 +1,4 @@
-package it.galactic.command.listener;
+package it.galactic.command.fuelstationcontrol.listener;
 import it.galactic.command.fuelstationcontrol.dto.GalaxyMissionDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
