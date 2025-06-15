@@ -1,7 +1,3 @@
-Certamente! Ecco una bozza di `README.md` completa e ben strutturata, che puoi copiare direttamente nel tuo repository GitHub. Segue le best practice, usa il tema "spaziale" per essere coinvolgente e fornisce tutte le informazioni necessarie per avviare il progetto.
-
----
-
 # 🚀 Missione Intergalattica – Il Centro Comandi Galattico (CCG)
 
 Benvenuti, cadetti, al simulatore del **Centro Comandi Galattico (CCG)**!
