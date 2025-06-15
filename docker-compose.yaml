@@ -23,6 +23,11 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_CREATE_TOPICS: "voyage-topic:1:1" # Crea il topic all'avvio
+    healthcheck: # <-- LA CORREZIONE È QUI
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -56,9 +61,10 @@ services:
       dockerfile: Dockerfile.jvm
     container_name: navecom
     ports:
-      - "8081:8081" # API per inviare comandi
+      - "8081:8081"
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - SERVER_PORT=8081
@@ -69,7 +75,8 @@ services:
       dockerfile: Dockerfile.jvm
     container_name: fuelstationcontrol
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 
@@ -79,8 +86,10 @@ services:
       dockerfile: Dockerfile.jvm
     container_name: securitycontrol
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy # Aggiunto healthcheck anche qui per coerenza
+      postgres-db:
+        condition: service_healthy # Dovremo aggiungere un healthcheck anche a postgres
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
@@ -93,8 +102,10 @@ services:
       dockerfile: Dockerfile.jvm
     container_name: centrallogic
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
@@ -109,7 +120,8 @@ services:
     ports:
       - "8082:8082" # API per monitorare lo stato
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
       - SPRING_DATASOURCE_USERNAME=galactic_user
