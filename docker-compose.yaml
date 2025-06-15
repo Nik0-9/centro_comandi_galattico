@@ -1,0 +1,120 @@
+services:
+  # 1. Infrastruttura Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092" # Espone Kafka all'esterno per test locali
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CREATE_TOPICS: "voyage-topic:1:1" # Crea il topic all'avvio
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # 2. Database
+  postgres-db:
+    image: postgres:14
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: galactic_user
+      POSTGRES_PASSWORD: galactic_password
+      POSTGRES_DB: gcc_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # 3. Microservizi Applicativi
+  navecom:
+    build:
+      context: ./navecom
+      dockerfile: Dockerfile.jvm
+    container_name: navecom
+    ports:
+      - "8081:8081" # API per inviare comandi
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SERVER_PORT=8081
+
+  fuelstationcontrol:
+    build:
+      context: ./fuelstationcontrol
+      dockerfile: Dockerfile.jvm
+    container_name: fuelstationcontrol
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+  securitycontrol:
+    build:
+      context: ./securitycontrol
+      dockerfile: Dockerfile.jvm
+    container_name: securitycontrol
+    depends_on:
+      - kafka
+      - postgres-db
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      - SPRING_DATASOURCE_USERNAME=galactic_user
+      - SPRING_DATASOURCE_PASSWORD=galactic_password
+
+  centrallogic:
+    build:
+      context: ./centrallogic
+      dockerfile: Dockerfile.jvm
+    container_name: centrallogic
+    depends_on:
+      - kafka
+      - postgres-db
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      - SPRING_DATASOURCE_USERNAME=galactic_user
+      - SPRING_DATASOURCE_PASSWORD=galactic_password
+
+  stargateadmin:
+    build:
+      context: ./stargateadmin
+      dockerfile: Dockerfile.jvm
+    container_name: stargateadmin
+    ports:
+      - "8082:8082" # API per monitorare lo stato
+    depends_on:
+      - postgres-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      - SPRING_DATASOURCE_USERNAME=galactic_user
+      - SPRING_DATASOURCE_PASSWORD=galactic_password
+      - SERVER_PORT=8082
+
+volumes:
+  postgres-data:
