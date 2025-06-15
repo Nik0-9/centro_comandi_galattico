@@ -19,5 +19,5 @@ public class GalaxyMissionDTO {
     public double getFuelLevel() { return fuelLevel; }
     public void setFuelLevel(double fuelLevel) { this.fuelLevel = fuelLevel; }
     public ZonedDateTime getDepartureTime() { return departureTime; }
-    public void setDepartureTime(ZonedDateTime departureTime) { this.departureTime = departureTime; }s
+    public void setDepartureTime(ZonedDateTime departureTime) { this.departureTime = departureTime; }
 }
