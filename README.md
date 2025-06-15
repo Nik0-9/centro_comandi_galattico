@@ -57,8 +57,8 @@ Segui questi passi per clonare il repository e avviare l'intero ecosistema galat
 
 **1. Clona il Repository**
 ```bash
-git clone https://github.com/tuo-username/missione-intergalattica.git
-cd missione-intergalattica
+git clone https://github.com/Nik0-9/centro_comandi_galattico.git
+cd centro_comandi_galattico
 ```
 
 **2. Costruisci le Immagini Docker dei Microservizi**
