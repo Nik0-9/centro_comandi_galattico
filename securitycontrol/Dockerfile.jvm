@@ -13,7 +13,7 @@ COPY pom.xml .
 COPY cisco-ca.crt .
 
 # 2. ESEGUI IL COMANDO PER INSTALLARE IL CERTIFICATO. QUESTO È IL PASSAGGIO CHIAVE MANCANTE.
-RUN keytool -importcert -alias navecom-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
+RUN keytool -importcert -alias securitycontrol-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
 # ---- FINE SEZIONE CERTIFICATO SSL ----
 
 COPY src ./src

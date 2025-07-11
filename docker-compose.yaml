@@ -53,6 +53,23 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U galactic_user -d gcc_database" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    #networks:
+    #    - galactic-net
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    #networks:
+     # - galactic-net
+    ports:
+      - "8888:8080" # Accedi ad Adminer su http://localhost:8888
+    depends_on:
+      - postgres-db
 
   # 3. Microservizi Applicativi
   navecom:
@@ -87,22 +104,6 @@ services:
     container_name: securitycontrol
     depends_on:
       kafka:
-        condition: service_healthy # Aggiunto healthcheck anche qui per coerenza
-      postgres-db:
-        condition: service_healthy # Dovremo aggiungere un healthcheck anche a postgres
-    environment:
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
-      - SPRING_DATASOURCE_USERNAME=galactic_user
-      - SPRING_DATASOURCE_PASSWORD=galactic_password
-
-  centrallogic:
-    build:
-      context: ./centrallogic
-      dockerfile: Dockerfile.jvm
-    container_name: centrallogic
-    depends_on:
-      kafka:
         condition: service_healthy
       postgres-db:
         condition: service_healthy
@@ -112,21 +113,37 @@ services:
       - SPRING_DATASOURCE_USERNAME=galactic_user
       - SPRING_DATASOURCE_PASSWORD=galactic_password
 
-  stargateadmin:
-    build:
-      context: ./stargateadmin
-      dockerfile: Dockerfile.jvm
-    container_name: stargateadmin
-    ports:
-      - "8082:8082" # API per monitorare lo stato
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
-      - SPRING_DATASOURCE_USERNAME=galactic_user
-      - SPRING_DATASOURCE_PASSWORD=galactic_password
-      - SERVER_PORT=8082
+  #centrallogic:
+   # build:
+    #  context: ./centrallogic
+     # dockerfile: Dockerfile.jvm
+    #container_name: centrallogic
+    #depends_on:
+     # kafka:
+      #  condition: service_healthy
+      #postgres-db:
+       # condition: service_healthy
+   # environment:
+    #  - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+     # - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      #- SPRING_DATASOURCE_USERNAME=galactic_user
+      #- SPRING_DATASOURCE_PASSWORD=galactic_password
+
+  #stargateadmin:
+   # build:
+    #  context: ./stargateadmin
+     # dockerfile: Dockerfile.jvm
+    #container_name: stargateadmin
+    #ports:
+     # - "8082:8082" # API per monitorare lo stato
+    #depends_on:
+     # postgres-db:
+      #  condition: service_healthy
+    #environment:
+     # - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      #- SPRING_DATASOURCE_USERNAME=galactic_user
+      #- SPRING_DATASOURCE_PASSWORD=galactic_password
+      #- SERVER_PORT=8082
 
 volumes:
   postgres-data:
