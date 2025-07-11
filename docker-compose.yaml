@@ -3,6 +3,8 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
+    networks:
+      - galactic-net
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -10,6 +12,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka
+    networks:
+      - galactic-net
     depends_on:
       - zookeeper
     ports:
@@ -17,13 +21,12 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_CREATE_TOPICS: "voyage-topic:1:1" # Crea il topic all'avvio
-    healthcheck: # <-- LA CORREZIONE È QUI
+    healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 10s
       timeout: 5s
@@ -32,19 +35,21 @@ services:
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
+    networks:
+      - galactic-net
     depends_on:
       - kafka
     ports:
-      - "8080:8080"
+      - "8090:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_NAME: local-galaxy-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
 
-  # 2. Database
   postgres-db:
     image: postgres:14
     container_name: postgres-db
+    networks:
+      - galactic-net
     environment:
       POSTGRES_USER: galactic_user
       POSTGRES_PASSWORD: galactic_password
@@ -64,14 +69,14 @@ services:
   adminer:
     image: adminer
     container_name: adminer
-    #networks:
-     # - galactic-net
+    networks:
+      - galactic-net
     ports:
       - "8888:8080" # Accedi ad Adminer su http://localhost:8888
     depends_on:
       - postgres-db
 
-  # 3. Microservizi Applicativi
+
   navecom:
     build:
       context: ./navecom
@@ -91,17 +96,22 @@ services:
       context: ./fuelstationcontrol
       dockerfile: Dockerfile.jvm
     container_name: fuelstationcontrol
+    networks:
+      - galactic-net
     depends_on:
       kafka:
         condition: service_healthy
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_KAFKA_CONSUMER_GROUP_ID=fuel-group
 
   securitycontrol:
     build:
       context: ./securitycontrol
       dockerfile: Dockerfile.jvm
     container_name: securitycontrol
+    networks:
+      - galactic-net
     depends_on:
       kafka:
         condition: service_healthy
@@ -109,6 +119,7 @@ services:
         condition: service_healthy
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_KAFKA_CONSUMER_GROUP_ID=security-group
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
       - SPRING_DATASOURCE_USERNAME=galactic_user
       - SPRING_DATASOURCE_PASSWORD=galactic_password
@@ -144,6 +155,9 @@ services:
       #- SPRING_DATASOURCE_USERNAME=galactic_user
       #- SPRING_DATASOURCE_PASSWORD=galactic_password
       #- SERVER_PORT=8082
+networks:
+  galactic-net:
+    driver: bridge
 
 volumes:
   postgres-data:
