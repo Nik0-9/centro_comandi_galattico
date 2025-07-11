@@ -41,7 +41,7 @@ graph TD
 *   **PostgreSQL** come database per la persistenza dei dati
 *   **Docker** & **Docker Compose** per l'orchestrazione dei container
 *   **Maven** per la gestione delle dipendenze e il build
-*   **Lombok** per ridurre il boilerplate (opzionale)
+*   **Lombok** per ridurre il boilerplate 
 
 ## ✅ Prerequisiti
 
