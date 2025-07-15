@@ -63,8 +63,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    #networks:
-    #    - galactic-net
 
   adminer:
     image: adminer
@@ -76,12 +74,13 @@ services:
     depends_on:
       - postgres-db
 
-
   navecom:
     build:
       context: ./navecom
       dockerfile: Dockerfile.jvm
     container_name: navecom
+    networks:
+      - galactic-net
     ports:
       - "8081:8081"
     depends_on:
@@ -123,7 +122,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
       - SPRING_DATASOURCE_USERNAME=galactic_user
       - SPRING_DATASOURCE_PASSWORD=galactic_password
-
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
   #centrallogic:
    # build:
     #  context: ./centrallogic

@@ -5,24 +5,31 @@ FROM maven:3.8-openjdk-17-slim AS builder
 
 WORKDIR /app
 
-# Copia il pom per scaricare le dipendenze
+# ---- Sezione Certificato (opzionale se non sei sulla rete aziendale) ----
+COPY cisco-ca.crt .
+RUN keytool -importcert -alias securitycontrol-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
+
+# PASSO 1: Copia SOLO il pom.xml
 COPY pom.xml .
 
-# ---- INIZIO SEZIONE CERTIFICATO SSL ----
-# 1. Copia il certificato dalla tua macchina al container
-COPY cisco-ca.crt .
+# PASSO 2: Scarica TUTTE le dipendenze in una volta sola.
+# Questo è il comando chiave. Se fallisce, sai che è la rete.
+# Se ha successo, Docker mette in cache questo strato.
+RUN mvn dependency:go-offline
 
-# 2. ESEGUI IL COMANDO PER INSTALLARE IL CERTIFICATO. QUESTO È IL PASSAGGIO CHIAVE MANCANTE.
-RUN keytool -importcert -alias securitycontrol-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
-# ---- FINE SEZIONE CERTIFICATO SSL ----
-
+# PASSO 3: Ora copia il resto del codice sorgente.
+# Se modifichi solo il codice Java, Docker ripartirà da qui, saltando il download!
 COPY src ./src
-RUN mvn clean package -DskipTests
-# Importa il certificato usando il nuovo nome
-RUN keytool -importcert -alias cisco-umbrella-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
 
-# Fase 2: Creazione dell'immagine finale con solo il JRE
+# PASSO 4: Compila e crea il pacchetto usando le dipendenze già scaricate.
+# Questo passo ora non accederà a internet.
+RUN mvn package -DskipTests
+
+# =========================================================================
+# Fase 2: Creazione dell'immagine finale
+# =========================================================================
 FROM eclipse-temurin:17-jre-focal
+
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
