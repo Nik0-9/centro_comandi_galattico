@@ -144,21 +144,24 @@ services:
       - SPRING_DATASOURCE_PASSWORD=galactic_password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
 
-  #stargateadmin:
-   # build:
-    #  context: ./stargateadmin
-     # dockerfile: Dockerfile.jvm
-    #container_name: stargateadmin
-    #ports:
-     # - "8082:8082" # API per monitorare lo stato
-    #depends_on:
-     # postgres-db:
-      #  condition: service_healthy
-    #environment:
-     # - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
-      #- SPRING_DATASOURCE_USERNAME=galactic_user
-      #- SPRING_DATASOURCE_PASSWORD=galactic_password
-      #- SERVER_PORT=8082
+  stargateadmin:
+    build:
+      context: ./stargateadmin
+      dockerfile: Dockerfile.jvm
+    container_name: stargateadmin
+    networks:
+      - galactic-net
+    ports:
+      - "8082:8080" # API per monitorare lo stato
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      - SPRING_DATASOURCE_USERNAME=galactic_user
+      - SPRING_DATASOURCE_PASSWORD=galactic_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
 networks:
   galactic-net:
     driver: bridge

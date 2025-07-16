@@ -1,7 +1,6 @@
-package it.galactic.command.securitycontrol.repository;
+package it.galactic.command.stargateadmin.repository;
 
-import it.galactic.command.securitycontrol.entity.SecurityAlert;
-
+import it.galactic.command.stargateadmin.entity.SecurityAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
