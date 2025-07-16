@@ -123,21 +123,26 @@ services:
       - SPRING_DATASOURCE_USERNAME=galactic_user
       - SPRING_DATASOURCE_PASSWORD=galactic_password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-  #centrallogic:
-   # build:
-    #  context: ./centrallogic
-     # dockerfile: Dockerfile.jvm
-    #container_name: centrallogic
-    #depends_on:
-     # kafka:
-      #  condition: service_healthy
-      #postgres-db:
-       # condition: service_healthy
-   # environment:
-    #  - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-     # - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
-      #- SPRING_DATASOURCE_USERNAME=galactic_user
-      #- SPRING_DATASOURCE_PASSWORD=galactic_password
+
+  centrallogic:
+    build:
+      context: ./centrallogic
+      dockerfile: Dockerfile.jvm
+    container_name: central-logic-consumer
+    networks:
+      - galactic-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_KAFKA_CONSUMER_GROUP_ID=central-logic-group
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/gcc_database
+      - SPRING_DATASOURCE_USERNAME=galactic_user
+      - SPRING_DATASOURCE_PASSWORD=galactic_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
 
   #stargateadmin:
    # build:
