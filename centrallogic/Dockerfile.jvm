@@ -9,7 +9,7 @@ WORKDIR /app
 # ---- Sezione Certificato ----
 COPY cisco-ca.crt .
 # !!! IMPORTANTE: Alias specifico per NAVECOM !!!
-RUN keytool -importcert -alias fuelstationcontrol-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
+RUN keytool -importcert -alias centrallogic-ca -file cisco-ca.crt -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
 
 # ---- Sezione Build Ottimizzata ----
 # 1. Copia SOLO il pom.xml.

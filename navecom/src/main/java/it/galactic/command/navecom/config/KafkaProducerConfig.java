@@ -20,23 +20,23 @@ import java.util.Map;
  */
 @Configuration
 public class KafkaProducerConfig {
-     // L'URL del server Kafka viene preso dal file application.properties
-     @Value("${spring.kafka.bootstrap-servers}")
-     private String bootstrapServers;
- 
-     @Bean
-     public ProducerFactory<String, GalaxyMissionDTO> producerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        
-        // MODIFICATO: La factory ora è tipizzata correttamente
-        return new DefaultKafkaProducerFactory<>(configProps);
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    @Bean
+    public ProducerFactory<String, GalaxyMissionDTO> producerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        JsonSerializer<GalaxyMissionDTO> jsonSerializer = new JsonSerializer<>();
+        jsonSerializer.setAddTypeInfo(true);
+
+        return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), jsonSerializer);
     }
 
     @Bean
-    // MODIFICATO: Il KafkaTemplate ora ha il tipo esatto richiesto dal service
     public KafkaTemplate<String, GalaxyMissionDTO> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
